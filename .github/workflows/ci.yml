@@ -1,0 +1,92 @@
+name: EcomCore CI/CD
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: 496006843764.dkr.ecr.us-east-1.amazonaws.com
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest pytest-asyncio httpx
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
+
+      - name: Check tax rate compliance
+        run: |
+          # Verify TAX_RATE_MULTIPLIER is not zero (compliance check)
+          python -c "
+          import sys
+          sys.path.insert(0, '.')
+          from config.settings import TAX_RATE_MULTIPLIER
+          if TAX_RATE_MULTIPLIER == 0:
+              print('FAIL: TAX_RATE_MULTIPLIER is 0 — tax compliance violation!')
+              sys.exit(1)
+          print(f'OK: TAX_RATE_MULTIPLIER = {TAX_RATE_MULTIPLIER}')
+          "
+
+      - name: Check critical config values
+        run: |
+          python -c "
+          import sys
+          sys.path.insert(0, '.')
+          from config.settings import (
+              INVENTORY_RESERVE_TIMEOUT,
+              PAYMENT_RATE_LIMIT,
+              DB_POOL_SIZE,
+          )
+          assert INVENTORY_RESERVE_TIMEOUT >= 10, f'INVENTORY_RESERVE_TIMEOUT too low: {INVENTORY_RESERVE_TIMEOUT}'
+          assert PAYMENT_RATE_LIMIT > 0, f'PAYMENT_RATE_LIMIT is zero!'
+          assert DB_POOL_SIZE > 0, f'DB_POOL_SIZE is zero!'
+          print('All critical config checks passed.')
+          "
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push order-service
+        run: |
+          docker build -t $ECR_REGISTRY/ecomcore-order-service:${{ github.sha }} \
+            -f services/order_service/Dockerfile .
+          docker push $ECR_REGISTRY/ecomcore-order-service:${{ github.sha }}
+          docker tag $ECR_REGISTRY/ecomcore-order-service:${{ github.sha }} \
+            $ECR_REGISTRY/ecomcore-order-service:latest
+          docker push $ECR_REGISTRY/ecomcore-order-service:latest
+
+      - name: Deploy to EKS
+        run: |
+          aws eks update-kubeconfig --name ecomcore-cluster --region $AWS_REGION
+          kubectl set image deploy/order-service \
+            order-service=$ECR_REGISTRY/ecomcore-order-service:${{ github.sha }} \
+            -n ecomcore
+          kubectl rollout status deploy/order-service -n ecomcore
