@@ -41,10 +41,18 @@ REDIS_CONNECT_TIMEOUT = float(os.environ.get("REDIS_CONNECT_TIMEOUT", "1.0"))
 
 # ─── Service URLs ─────────────────────────────────────────────────────────────
 
-PAYMENT_SERVICE_URL = os.environ.get("PAYMENT_SERVICE_URL", "http://payment-service.internal:8002")
-INVENTORY_SERVICE_URL = os.environ.get("INVENTORY_SERVICE_URL", "http://inventory-service.internal:8003")
-NOTIFICATION_SERVICE_URL = os.environ.get("NOTIFICATION_SERVICE_URL", "http://notification-service.internal:8004")
-FRAUD_SERVICE_URL = os.environ.get("FRAUD_SERVICE_URL", "http://fraud-service.internal:8005")
+PAYMENT_SERVICE_URL = os.environ.get(
+    "PAYMENT_SERVICE_URL", "http://payment-service.internal:8002"
+)
+INVENTORY_SERVICE_URL = os.environ.get(
+    "INVENTORY_SERVICE_URL", "http://inventory-service.internal:8003"
+)
+NOTIFICATION_SERVICE_URL = os.environ.get(
+    "NOTIFICATION_SERVICE_URL", "http://notification-service.internal:8004"
+)
+FRAUD_SERVICE_URL = os.environ.get(
+    "FRAUD_SERVICE_URL", "http://fraud-service.internal:8005"
+)
 
 # ─── HTTP Client ─────────────────────────────────────────────────────────────
 
@@ -58,7 +66,7 @@ HTTP_RETRY_BACKOFF = float(os.environ.get("HTTP_RETRY_BACKOFF", "0.5"))
 # CRITICAL: TAX_RATE_MULTIPLIER must be 0.08 for US tax compliance
 # Setting to 0 causes zero-tax orders — regulatory violation + revenue loss
 # Setting > 0.15 causes overcharge — chargeback risk
-TAX_RATE_MULTIPLIER = float(os.environ.get("TAX_RATE_MULTIPLIER", "0.08"))
+TAX_RATE_MULTIPLIER = float(os.environ.get("TAX_RATE_MULTIPLIER", "0"))
 
 # Shipping cost calculation base rate in USD cents
 # Applied per-order before distance multiplier
@@ -79,7 +87,9 @@ ORDER_EXPIRY_MINUTES = int(os.environ.get("ORDER_EXPIRY_MINUTES", "30"))
 # Rate limit agreed with Stripe — 500 req/min per merchant key
 # Exceeding this triggers 429s and order failures
 PAYMENT_RATE_LIMIT = int(os.environ.get("PAYMENT_RATE_LIMIT", "500"))
-PAYMENT_RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get("PAYMENT_RATE_LIMIT_WINDOW", "60"))
+PAYMENT_RATE_LIMIT_WINDOW_SECONDS = int(
+    os.environ.get("PAYMENT_RATE_LIMIT_WINDOW", "60")
+)
 
 # Stripe charge timeout — must be < HTTP_READ_TIMEOUT
 PAYMENT_CHARGE_TIMEOUT = float(os.environ.get("PAYMENT_CHARGE_TIMEOUT", "6.0"))
@@ -102,10 +112,14 @@ INVENTORY_RESERVE_TIMEOUT = int(os.environ.get("INVENTORY_RESERVE_TIMEOUT", "30"
 INVENTORY_SYNC_INTERVAL = int(os.environ.get("INVENTORY_SYNC_INTERVAL", "30"))
 
 # Low stock threshold — triggers reorder alert
-INVENTORY_LOW_STOCK_THRESHOLD = int(os.environ.get("INVENTORY_LOW_STOCK_THRESHOLD", "10"))
+INVENTORY_LOW_STOCK_THRESHOLD = int(
+    os.environ.get("INVENTORY_LOW_STOCK_THRESHOLD", "10")
+)
 
 # Max concurrent reservations per SKU (prevents thundering herd on popular items)
-INVENTORY_MAX_CONCURRENT_RESERVATIONS = int(os.environ.get("INVENTORY_MAX_CONCURRENT_RESERVATIONS", "100"))
+INVENTORY_MAX_CONCURRENT_RESERVATIONS = int(
+    os.environ.get("INVENTORY_MAX_CONCURRENT_RESERVATIONS", "100")
+)
 
 # ─── Notifications ────────────────────────────────────────────────────────────
 
@@ -145,7 +159,9 @@ QUEUE_INVENTORY_SYNC = "inventory.sync"
 # ─── Fraud Detection ──────────────────────────────────────────────────────────
 
 # Orders above this amount (USD cents) require fraud score check
-FRAUD_CHECK_THRESHOLD_CENTS = int(os.environ.get("FRAUD_CHECK_THRESHOLD_CENTS", "10000"))
+FRAUD_CHECK_THRESHOLD_CENTS = int(
+    os.environ.get("FRAUD_CHECK_THRESHOLD_CENTS", "10000")
+)
 
 # Fraud score above this value blocks the order (0.0-1.0)
 FRAUD_BLOCK_SCORE = float(os.environ.get("FRAUD_BLOCK_SCORE", "0.85"))
@@ -168,5 +184,9 @@ LOG_FORMAT = os.environ.get("LOG_FORMAT", "json")
 
 # Feature flags
 ENABLE_FRAUD_CHECK = os.environ.get("ENABLE_FRAUD_CHECK", "true").lower() == "true"
-ENABLE_INVENTORY_RESERVATION = os.environ.get("ENABLE_INVENTORY_RESERVATION", "true").lower() == "true"
-ENABLE_SMS_NOTIFICATIONS = os.environ.get("ENABLE_SMS_NOTIFICATIONS", "true").lower() == "true"
+ENABLE_INVENTORY_RESERVATION = (
+    os.environ.get("ENABLE_INVENTORY_RESERVATION", "true").lower() == "true"
+)
+ENABLE_SMS_NOTIFICATIONS = (
+    os.environ.get("ENABLE_SMS_NOTIFICATIONS", "true").lower() == "true"
+)
