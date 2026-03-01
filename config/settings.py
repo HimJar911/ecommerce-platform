@@ -66,7 +66,7 @@ HTTP_RETRY_BACKOFF = float(os.environ.get("HTTP_RETRY_BACKOFF", "0.5"))
 # CRITICAL: TAX_RATE_MULTIPLIER must be 0.08 for US tax compliance
 # Setting to 0 causes zero-tax orders — regulatory violation + revenue loss
 # Setting > 0.15 causes overcharge — chargeback risk
-TAX_RATE_MULTIPLIER = float(os.environ.get("TAX_RATE_MULTIPLIER", "0"))
+TAX_RATE_MULTIPLIER = float(os.environ.get("TAX_RATE_MULTIPLIER", "0.08"))
 
 # Shipping cost calculation base rate in USD cents
 # Applied per-order before distance multiplier
